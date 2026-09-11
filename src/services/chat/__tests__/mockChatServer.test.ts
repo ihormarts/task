@@ -68,7 +68,7 @@ describe('mock chat server', () => {
 
   it('only returns messages newer than the sequence the client already has', async () => {
     const server = new MockChatServer({ store: new MemoryStore(), historySize: 10 });
-    await server.appendIncoming(['one', 'two']);
+    await server.appendIncoming([{ text: 'one' }, { text: 'two' }]);
 
     const incoming = await server.pullSince(10);
     expect(incoming.map((message) => message.text)).toEqual(['one', 'two']);

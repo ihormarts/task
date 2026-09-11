@@ -11,6 +11,12 @@ export type AcceptRequest = {
   author: MessageAuthor;
 };
 
+export type IncomingDraft = {
+  text: string;
+  kind?: MessageKind;
+  amountCents?: number;
+};
+
 export type AcceptResult = {
   message: ConfirmedMessage;
   deduplicated: boolean;
@@ -98,16 +104,17 @@ export class MockChatServer {
     return { message, deduplicated: false };
   }
 
-  async appendIncoming(texts: string[], kind: MessageKind = 'text'): Promise<ConfirmedMessage[]> {
+  async appendIncoming(drafts: IncomingDraft[]): Promise<ConfirmedMessage[]> {
     await this.load();
 
-    const created = texts.map((text, index) => ({
+    const created = drafts.map((draft, index) => ({
       id: `srv_${this.headSeq + 1 + index}`,
       clientId: null,
       seq: this.headSeq + 1 + index,
       author: 'creator' as MessageAuthor,
-      kind,
-      text,
+      kind: draft.kind ?? ('text' as MessageKind),
+      text: draft.text,
+      amountCents: draft.amountCents,
       createdAt: Date.now() + index,
     }));
 

@@ -35,10 +35,10 @@ describe('recovery after going offline', () => {
     );
 
     await harness.server.appendIncoming([
-      'while you were away one',
-      'while you were away two',
-      'while you were away three',
-      'while you were away four',
+      { text: 'while you were away one' },
+      { text: 'while you were away two' },
+      { text: 'while you were away three' },
+      { text: 'while you were away four' },
     ]);
 
     harness.conditions.update({ online: true });

@@ -9,7 +9,6 @@ export type ConfirmedMessage = {
   author: MessageAuthor;
   kind: MessageKind;
   text: string;
-  mediaUrl?: string;
   amountCents?: number;
   createdAt: number;
 };

@@ -18,6 +18,7 @@ import { getBenchmarkTarget } from '../../perf/benchmarkTarget';
 import { perfStore } from '../../perf/perfStore';
 import { runScrollAndTypeBenchmark } from '../../perf/benchmark';
 import type { BillingBehaviour } from '../../services/billing/mockBillingService';
+import type { IncomingDraft } from '../../services/chat/mockChatServer';
 
 type Props = {
   onClose: () => void;
@@ -30,11 +31,16 @@ const CONFIRMATION_DELAYS: { label: string; value: number | null }[] = [
   { label: 'manual', value: null },
 ];
 
-const INCOMING_BATCH = [
-  'Missed you on the stream tonight',
-  'Dropping the behind the scenes tomorrow',
-  'Which thumbnail do you prefer, left or right',
-  'Thanks for sticking around this long',
+const INCOMING_BATCH: IncomingDraft[] = [
+  { text: 'Missed you on the stream tonight' },
+  { text: 'Dropping the behind the scenes tomorrow' },
+  { text: 'Which thumbnail do you prefer, left or right' },
+  { text: 'Thanks for sticking around this long' },
+];
+
+const RICH_BATCH: IncomingDraft[] = [
+  { text: 'Here is the uncut take from last night', kind: 'media' },
+  { text: 'gift', kind: 'gift', amountCents: 5000 },
 ];
 
 export function DevPanelScreen({ onClose }: Props) {
@@ -75,8 +81,8 @@ export function DevPanelScreen({ onClose }: Props) {
     entitlements.confirmationDelayMs = next;
   }, []);
 
-  const simulateIncoming = useCallback(async () => {
-    await chatServer.appendIncoming(INCOMING_BATCH);
+  const deliver = useCallback(async (drafts: IncomingDraft[]) => {
+    await chatServer.appendIncoming(drafts);
     if (conditions.isOnline) {
       await chatStore.getState().pull();
     }
@@ -145,8 +151,9 @@ export function DevPanelScreen({ onClose }: Props) {
         <Section title="Incoming">
           <Action
             label={`Deliver ${INCOMING_BATCH.length} messages from the creator`}
-            onPress={simulateIncoming}
+            onPress={() => deliver(INCOMING_BATCH)}
           />
+          <Action label="Deliver a video and a gift" onPress={() => deliver(RICH_BATCH)} />
           <Action label="Pull now" onPress={() => chatStore.getState().pull()} />
           <Action label="Flush outbox now" onPress={() => chatStore.getState().flush()} />
         </Section>
