@@ -68,6 +68,13 @@ wants. Caught by `tsc`, fixed against the installed type definitions.
 verify wording — Google's user-generated content and inappropriate content policies — I
 describe the requirement and link the page rather than quote it.
 
+**A benchmark that was too easy.** The first sequence typed 60 characters at 45 ms
+intervals, which is slower than real typing and left so much headroom that the two list
+paths were almost indistinguishable. I made it heavier — 120 characters at 16 ms — and
+recorded both results in the README. Worth saying plainly: I changed the benchmark because
+45 ms is not how people type, not because the first number was inconvenient, and the first
+number is published next to the second so anyone can judge that for themselves.
+
 **Prose.** The first drafts of the README were longer, more even in tone, and hedged where
 they should have been direct. I cut them substantially and rewrote the sections that
 mattered, particularly the bug explanation and the honesty about what the performance
@@ -75,16 +82,18 @@ harness does not measure.
 
 ## What I am unsure about
 
-**The performance numbers are not filled in.** The harness, the fixed scroll-and-type
-sequence and the before/after toggle all exist and work; I did not get the simulator run
-done inside the time. I have deliberately left the table empty rather than estimate. I can
-run it in the walkthrough.
+**Whether the performance result supports the change.** It is measured and it is weak.
+Average frame rate and p95 are identical between the two list paths; only the worst frame
+and two dropped frames separate them. My argument for the optimisation rests on what the
+tail would do on a throttled physical device, and I did not measure that. It is a
+prediction. A reviewer would be right to push on it.
 
 **Whether the JS-thread frame recorder is the right instrument.** It reports average FPS,
-p95 and worst frame time, dropped frames and Hermes heap, which is enough to compare two
-runs of the same sequence on the same machine. It cannot see UI-thread stalls, and on a
-real device that is often where the dropped frames are. FlashList also ships its own
-`JSFPSMonitor` and `useBenchmark`; I did not cross-check against them, and I should have.
+p95 and worst frame time and dropped frames, which is enough to compare two runs of the
+same sequence on the same machine. It cannot see UI-thread stalls, and on a real device
+that is often where the dropped frames are. It also could not read the Hermes heap in this
+runtime, so that column says `n/a`. FlashList ships its own `JSFPSMonitor` and
+`useBenchmark`; I did not cross-check against them, and I should have.
 
 **Android is untested.** Nothing in the project needs native code, so I expect it to run,
 but I have not run it. `KeyboardAvoidingView` is the part I would expect to need work.
