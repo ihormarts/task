@@ -3,11 +3,11 @@ import { composerStore } from '../features/chat/composerStore';
 import { delay } from '../lib/delay';
 import type { FrameReport } from './frameRecorder';
 
-const SCROLL_STEPS = 24;
-const SCROLL_STEP_MS = 140;
+const SCROLL_STEPS = 40;
+const SCROLL_STEP_MS = 60;
 const TYPING_FRAGMENT = 'measuring the composer under load ';
-const TYPING_KEYSTROKES = 60;
-const TYPING_KEYSTROKE_MS = 45;
+const TYPING_KEYSTROKES = 120;
+const TYPING_KEYSTROKE_MS = 16;
 
 export type ScrollTarget = {
   scrollToOffset: (options: { offset: number; animated: boolean }) => void;

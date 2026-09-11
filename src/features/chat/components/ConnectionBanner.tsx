@@ -1,5 +1,6 @@
 import { memo } from 'react';
-import { StyleSheet, Text, View } from 'react-native';
+import { StyleSheet, Text } from 'react-native';
+import Animated, { FadeIn, FadeOut, useReducedMotion } from 'react-native-reanimated';
 
 import { palette, spacing, typography } from '../../../design/theme';
 import type { ConnectionState } from '../chatStore';
@@ -26,6 +27,7 @@ function bannerContent(connection: ConnectionState, queuedCount: number) {
 }
 
 function ConnectionBannerComponent({ connection, queuedCount }: Props) {
+  const reduceMotion = useReducedMotion();
   const content = bannerContent(connection, queuedCount);
 
   if (content === null) {
@@ -33,15 +35,19 @@ function ConnectionBannerComponent({ connection, queuedCount }: Props) {
   }
 
   return (
-    <View
+    <Animated.View
+      entering={reduceMotion ? undefined : FadeIn.duration(160)}
+      exiting={reduceMotion ? undefined : FadeOut.duration(120)}
       style={[styles.container, content.tone === 'warning' ? styles.warning : styles.neutral]}
       accessibilityLiveRegion="polite"
       accessibilityRole="alert"
     >
-      <Text style={[styles.text, content.tone === 'warning' ? styles.textWarning : styles.textNeutral]}>
+      <Text
+        style={[styles.text, content.tone === 'warning' ? styles.textWarning : styles.textNeutral]}
+      >
         {content.text}
       </Text>
-    </View>
+    </Animated.View>
   );
 }
 
