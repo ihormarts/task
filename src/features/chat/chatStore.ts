@@ -72,7 +72,7 @@ export function createChatStore(dependencies: ChatStoreDependencies) {
   const outbox = new Outbox(store);
 
   let flushing = false;
-  let flushWaiters: Array<() => void> = [];
+  let flushWaiters: (() => void)[] = [];
   let retryTimer: ReturnType<typeof setTimeout> | null = null;
   let unsubscribeNetwork: (() => void) | null = null;
   let wasOnline = conditions.isOnline;
