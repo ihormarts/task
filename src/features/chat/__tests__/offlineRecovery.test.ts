@@ -1,4 +1,4 @@
-import { createHarness, fanMessageTexts, grantAccess, restart } from './testHarness';
+import { createHarness, sentMessageTexts, grantAccess, restart } from '../../../testing/harness';
 
 describe('recovery after going offline', () => {
   it('keeps three offline sends waiting, survives a restart and delivers them once', async () => {
@@ -46,7 +46,7 @@ describe('recovery after going offline', () => {
     await harness.chat.getState().flush();
 
     expect(harness.chat.getState().pending).toHaveLength(0);
-    expect(fanMessageTexts(harness)).toEqual(['first', 'second', 'third']);
+    expect(sentMessageTexts(harness)).toEqual(['first', 'second', 'third']);
 
     const creatorTexts = harness.chat
       .getState()
@@ -76,7 +76,7 @@ describe('recovery after going offline', () => {
     harness = restart(harness);
     await harness.chat.getState().initialize();
 
-    expect(fanMessageTexts(harness)).toEqual(['mid flight']);
+    expect(sentMessageTexts(harness)).toEqual(['mid flight']);
     expect(harness.chat.getState().pending).toHaveLength(0);
 
     harness.chat.getState().dispose();

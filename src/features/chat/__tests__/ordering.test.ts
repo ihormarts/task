@@ -1,5 +1,5 @@
-import { buildThread, mergeConfirmed } from '../threadMerge';
-import { createHarness, grantAccess } from './testHarness';
+import { buildThread, dropConfirmedFromOutbox, mergeConfirmed } from '../threadMerge';
+import { createHarness, grantAccess } from '../../../testing/harness';
 import type { ConfirmedMessage, PendingMessage } from '../../../domain/message';
 
 function confirmed(seq: number, clientId: string | null = null): ConfirmedMessage {
@@ -31,10 +31,13 @@ describe('thread ordering', () => {
     expect(merged.map((message) => message.seq)).toEqual([1, 2, 3]);
   });
 
-  it('drops a confirmed copy that repeats a client id already in the thread', () => {
-    const merged = mergeConfirmed([confirmed(1, 'abc')], [confirmed(2, 'abc')]);
-    expect(merged).toHaveLength(1);
-    expect(merged[0].seq).toBe(1);
+  it('removes a queued message once a confirmation carries its client id', () => {
+    const remaining = dropConfirmedFromOutbox(
+      [pending('abc', 1), pending('def', 2)],
+      [confirmed(7, 'abc')],
+    );
+
+    expect(remaining.map((entry) => entry.clientId)).toEqual(['def']);
   });
 
   it('does not reorder or duplicate when the same page is merged repeatedly', () => {

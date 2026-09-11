@@ -1,4 +1,4 @@
-import { createHarness, fanMessageTexts, grantAccess } from './testHarness';
+import { createHarness, sentMessageTexts, grantAccess } from '../../../testing/harness';
 
 describe('failed sends', () => {
   it('keeps the text and offers a retry for a recoverable server outage', async () => {
@@ -18,7 +18,7 @@ describe('failed sends', () => {
     await harness.chat.getState().retry(entry.clientId);
 
     expect(harness.chat.getState().pending).toHaveLength(0);
-    expect(fanMessageTexts(harness)).toEqual(['this one hits an outage']);
+    expect(sentMessageTexts(harness)).toEqual(['this one hits an outage']);
 
     harness.chat.getState().dispose();
   });
@@ -52,7 +52,7 @@ describe('failed sends', () => {
     harness.conditions.update({ online: true, injectedFailure: 'message-rejected' });
     await harness.chat.getState().flush();
 
-    expect(fanMessageTexts(harness)).toEqual(['good text']);
+    expect(sentMessageTexts(harness)).toEqual(['good text']);
     expect(harness.chat.getState().pending.map((entry) => entry.status)).toEqual(['failed']);
 
     harness.chat.getState().dispose();

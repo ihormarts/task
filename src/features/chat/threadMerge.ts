@@ -12,19 +12,7 @@ export function mergeConfirmed(
   existing.forEach((message) => bySeq.set(message.seq, message));
   incoming.forEach((message) => bySeq.set(message.seq, message));
 
-  const seenClientIds = new Set<string>();
-  return [...bySeq.values()]
-    .sort((left, right) => left.seq - right.seq)
-    .filter((message) => {
-      if (message.clientId === null) {
-        return true;
-      }
-      if (seenClientIds.has(message.clientId)) {
-        return false;
-      }
-      seenClientIds.add(message.clientId);
-      return true;
-    });
+  return [...bySeq.values()].sort((left, right) => left.seq - right.seq);
 }
 
 export function dropConfirmedFromOutbox(

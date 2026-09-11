@@ -72,8 +72,10 @@ export function createChatStore(dependencies: ChatStoreDependencies) {
   const outbox = new Outbox(store);
 
   let flushing = false;
+  let flushWaiters: Array<() => void> = [];
   let retryTimer: ReturnType<typeof setTimeout> | null = null;
   let unsubscribeNetwork: (() => void) | null = null;
+  let wasOnline = conditions.isOnline;
 
   const chatStore = createStore<ChatState & ChatActions>((set, get) => {
     function syncThread(confirmed: ConfirmedMessage[], pending: PendingMessage[]) {
@@ -130,8 +132,16 @@ export function createChatStore(dependencies: ChatStoreDependencies) {
       }, backoffDelay(attempt));
     }
 
+    function hasUntriedEntry(): boolean {
+      return outbox.list().some((entry) => entry.status === 'queued' && entry.failure === null);
+    }
+
     async function flushQueue(): Promise<void> {
       if (flushing) {
+        await new Promise<void>((resolve) => flushWaiters.push(resolve));
+        if (conditions.isOnline && hasUntriedEntry()) {
+          await flushQueue();
+        }
         return;
       }
       flushing = true;
@@ -176,6 +186,9 @@ export function createChatStore(dependencies: ChatStoreDependencies) {
         }
       } finally {
         flushing = false;
+        const waiters = flushWaiters;
+        flushWaiters = [];
+        waiters.forEach((resolve) => resolve());
       }
     }
 
@@ -198,11 +211,18 @@ export function createChatStore(dependencies: ChatStoreDependencies) {
         });
 
         unsubscribeNetwork?.();
+        wasOnline = conditions.isOnline;
         unsubscribeNetwork = conditions.changes.subscribe((snapshot) => {
+          if (snapshot.online === wasOnline) {
+            return;
+          }
+          wasOnline = snapshot.online;
+
           if (!snapshot.online) {
             set({ connection: 'offline' });
             return;
           }
+
           set({ connection: 'syncing' });
           void get()
             .pull()

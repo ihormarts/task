@@ -1,11 +1,11 @@
-import { ChatTransport } from '../../../services/chat/chatTransport';
-import { MemoryStore } from '../../../storage/memoryStore';
-import { MockBillingService } from '../../../services/billing/mockBillingService';
-import { MockChatServer } from '../../../services/chat/mockChatServer';
-import { MockEntitlementBackend } from '../../../services/billing/mockEntitlementBackend';
-import { NetworkConditions } from '../../../services/chat/networkConditions';
-import { createChatStore } from '../chatStore';
-import { createPaywallStore } from '../../paywall/paywallStore';
+import { ChatTransport } from '../services/chat/chatTransport';
+import { MemoryStore } from '../storage/memoryStore';
+import { MockBillingService } from '../services/billing/mockBillingService';
+import { MockChatServer } from '../services/chat/mockChatServer';
+import { MockEntitlementBackend } from '../services/billing/mockEntitlementBackend';
+import { NetworkConditions } from '../services/chat/networkConditions';
+import { createChatStore } from '../features/chat/chatStore';
+import { createPaywallStore } from '../features/paywall/paywallStore';
 
 export const HISTORY_SIZE = 20;
 
@@ -85,9 +85,24 @@ export async function grantAccess(harness: Harness): Promise<void> {
   await harness.entitlements.confirmAllPending();
 }
 
-export function fanMessageTexts(harness: Harness): string[] {
+export function reloadClient(harness: Harness): Harness {
+  harness.chat.getState().dispose();
+  harness.paywall.getState().dispose();
+
+  return createHarness({
+    serverBytes: new MemoryStore(harness.serverBytes.snapshot()),
+    billingBytes: new MemoryStore(harness.billingBytes.snapshot()),
+  });
+}
+
+export function sentMessageTexts(harness: Harness): string[] {
   return harness.chat
     .getState()
-    .confirmed.filter((message) => message.author === 'fan')
+    .confirmed.filter((message) => message.clientId !== null)
     .map((message) => message.text);
+}
+
+export async function serverMessageTexts(harness: Harness): Promise<string[]> {
+  const messages = await harness.server.pullSince(HISTORY_SIZE);
+  return messages.map((message) => message.text);
 }

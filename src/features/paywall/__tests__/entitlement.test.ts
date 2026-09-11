@@ -1,5 +1,5 @@
 import { isEntitlementActive } from '../../../domain/billing';
-import { createHarness, restart } from '../../chat/__tests__/testHarness';
+import { createHarness, restart } from '../../../testing/harness';
 
 const PRODUCT_ID = 'fansuite.all_access.monthly';
 
