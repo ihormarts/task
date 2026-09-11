@@ -24,6 +24,13 @@ export function PaywallScreen({ onClose }: Props) {
   const busy = phase === 'purchasing' || phase === 'restoring';
   const awaitingConfirmation = phase === 'awaiting-confirmation' || entitlement.status === 'pending';
 
+  const locked = busy || hasAccess || awaitingConfirmation;
+  const primaryLabel = hasAccess
+    ? 'Subscribed'
+    : awaitingConfirmation
+      ? 'Confirming access…'
+      : `Subscribe for ${product?.priceLabel ?? ''}`;
+
   const purchase = useCallback(() => {
     if (product) {
       void paywallStore.getState().purchase(product.id);
@@ -95,19 +102,17 @@ export function PaywallScreen({ onClose }: Props) {
 
       <View style={[styles.footer, { paddingBottom: insets.bottom + spacing.lg }]}>
         <Pressable
-          style={[styles.primaryButton, (busy || hasAccess) && styles.primaryButtonDisabled]}
+          style={[styles.primaryButton, locked && styles.primaryButtonDisabled]}
           onPress={purchase}
-          disabled={busy || hasAccess}
+          disabled={locked}
           accessibilityRole="button"
-          accessibilityState={{ disabled: busy || hasAccess, busy }}
+          accessibilityState={{ disabled: locked, busy: busy || awaitingConfirmation }}
           accessibilityLabel={`Subscribe to ${product.title} for ${product.priceLabel} ${product.periodLabel}`}
         >
           {phase === 'purchasing' ? (
             <ActivityIndicator color={palette.white} />
           ) : (
-            <Text style={styles.primaryButtonText}>
-              {hasAccess ? 'Subscribed' : `Subscribe for ${product.priceLabel}`}
-            </Text>
+            <Text style={styles.primaryButtonText}>{primaryLabel}</Text>
           )}
         </Pressable>
 

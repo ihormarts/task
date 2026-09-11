@@ -22,6 +22,8 @@ import type { ThreadItem } from '../../domain/message';
 const CREATOR_NAME = 'Ethan Shoots';
 const CREATOR_HANDLE = '@ethan_shoots';
 
+const SCROLL_SETTLE_STEPS_MS = [120, 350];
+
 const MAINTAIN_POSITION = {
   startRenderingFromBottom: true,
   autoscrollToBottomThreshold: 0.2,
@@ -35,6 +37,7 @@ type Props = {
 export function ChatScreen({ onOpenPaywall, onOpenDevPanel }: Props) {
   const insets = useSafeAreaInsets();
   const listRef = useRef<FlashListRef<ThreadItem>>(null);
+  const scrollAfterNextChange = useRef(false);
 
   const thread = useStore(chatStore, (state) => state.thread);
   const connection = useStore(chatStore, (state) => state.connection);
@@ -50,6 +53,7 @@ export function ChatScreen({ onOpenPaywall, onOpenDevPanel }: Props) {
   );
 
   const send = useCallback((text: string) => {
+    scrollAfterNextChange.current = true;
     void chatStore.getState().send(text);
   }, []);
 
@@ -61,6 +65,11 @@ export function ChatScreen({ onOpenPaywall, onOpenDevPanel }: Props) {
     void chatStore.getState().discard(clientId);
   }, []);
 
+  const edit = useCallback((clientId: string, text: string) => {
+    composerStore.getState().setDraft(text);
+    void chatStore.getState().discard(clientId);
+  }, []);
+
   const loadOlder = useCallback(() => {
     if (hasMoreHistory) {
       void chatStore.getState().loadOlder();
@@ -69,6 +78,18 @@ export function ChatScreen({ onOpenPaywall, onOpenDevPanel }: Props) {
 
   useEffect(() => {
     registerBenchmarkList(listRef.current, thread.length);
+  }, [thread.length]);
+
+  useEffect(() => {
+    if (!scrollAfterNextChange.current) {
+      return undefined;
+    }
+    scrollAfterNextChange.current = false;
+
+    const timers = SCROLL_SETTLE_STEPS_MS.map((delayMs) =>
+      setTimeout(() => listRef.current?.scrollToEnd({ animated: true }), delayMs),
+    );
+    return () => timers.forEach(clearTimeout);
   }, [thread.length]);
 
   const renderItem = useCallback(
@@ -84,12 +105,13 @@ export function ChatScreen({ onOpenPaywall, onOpenDevPanel }: Props) {
           message={item.message}
           offline={connection === 'offline'}
           onRetry={retry}
+          onEdit={edit}
           onDiscard={discard}
           onOpenPaywall={onOpenPaywall}
         />
       );
     },
-    [connection, discard, onOpenPaywall, retry],
+    [connection, discard, edit, onOpenPaywall, retry],
   );
 
   const keyExtractor = useCallback((item: ThreadItem) => item.key, []);
@@ -117,6 +139,7 @@ export function ChatScreen({ onOpenPaywall, onOpenDevPanel }: Props) {
             thread={thread}
             connection={connection}
             onRetry={retry}
+            onEdit={edit}
             onDiscard={discard}
             onOpenPaywall={onOpenPaywall}
             onStartReached={loadOlder}
@@ -154,6 +177,7 @@ type UnoptimisedProps = {
   thread: ThreadItem[];
   connection: ReturnType<typeof chatStore.getState>['connection'];
   onRetry: (clientId: string) => void;
+  onEdit: (clientId: string, text: string) => void;
   onDiscard: (clientId: string) => void;
   onOpenPaywall: () => void;
   onStartReached: () => void;
@@ -164,6 +188,7 @@ function UnoptimisedThreadList({
   thread,
   connection,
   onRetry,
+  onEdit,
   onDiscard,
   onOpenPaywall,
   onStartReached,
@@ -193,6 +218,7 @@ function UnoptimisedThreadList({
             message={item.message}
             offline={connection === 'offline'}
             onRetry={(clientId) => onRetry(clientId)}
+            onEdit={(clientId, text) => onEdit(clientId, text)}
             onDiscard={(clientId) => onDiscard(clientId)}
             onOpenPaywall={() => onOpenPaywall()}
           />
@@ -212,5 +238,6 @@ const styles = StyleSheet.create({
   },
   listContent: {
     paddingTop: 8,
+    paddingBottom: 8,
   },
 });

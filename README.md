@@ -15,11 +15,11 @@ money anywhere in this project.
 ```bash
 npm install
 npm start          # then press i for iOS
-npm test           # 26 tests
+npm test           # 27 tests
 npm run typecheck
 ```
 
-Demo platform: **iOS Simulator, iPhone 16 Pro, iOS 26.0**, Expo Go, development
+Demo platform: **iOS Simulator, iPhone 17, iOS 26.5**, Expo Go, development
 (non-minified) JS bundle unless stated otherwise.
 
 Android should run from the same source — there is no native code in this project and no
@@ -259,6 +259,46 @@ first result was inconvenient. Both numbers are above.
 
 ---
 
+## What running it on the simulator changed
+
+The logic was green long before I had seen a single screen. Driving the app by hand
+afterwards found five things no unit test was ever going to catch, and all five are fixed:
+
+1. **The thread did not follow a message you just sent.** It stayed where it was and put
+   the new bubble under the composer. Both FlashList's own autoscroll and a plain
+   `scrollToEnd` land one row short, because at that moment the new row is still at its
+   estimated height. The fix scrolls twice, at 120 ms and 350 ms, which is after
+   FlashList has corrected the estimate. Not elegant; it is the honest shape of the
+   problem, and the alternative — inverting the list — is a larger change than this
+   exercise justified.
+
+2. **A rejected message offered "Try again".** The failure model already classified it as
+   needing a different action, and the UI ignored that and offered a retry that could only
+   fail again. The primary action is now chosen by the failure: retry, subscribe, or
+   **Edit message**, which puts the text back in the composer and clears the failed entry.
+
+3. **The failed bubble's own buttons were unreachable.** The wrapper was marked
+   `accessible`, which collapses everything inside it into one element — so "Try again" and
+   "Discard" were invisible to VoiceOver, and a tap landed on the container instead of the
+   button. The accessible wrapper is now only around the text and status; the actions are
+   their own elements. This is the bug I am least happy about, because I wrote that
+   `accessible` prop deliberately, for a good reason, in the one place it was wrong.
+
+4. **Your own messages and the creator's looked identical.** The design indents the
+   creator's bubble behind their avatar and runs yours to the container edge. My own bubble
+   had a left margin that exactly cancelled the avatar column, so both started at the same
+   x and the only difference was whether an avatar was present.
+
+5. **The paywall kept the Subscribe button live while confirmation was pending.** It could
+   not do damage — a second receipt is deduplicated — but it invited a tap that meant
+   nothing. It now reads "Confirming access…" and is disabled.
+
+Everything else behaved. The offline banner, the queued and failed states, restart
+recovery, the single copy after a lost response, the delayed-confirmation card and the
+composer lock all worked the first time on device.
+
+---
+
 ## Design
 
 Built from the FanSuite mobile `chat` frame: header with the creator and the
@@ -291,8 +331,11 @@ Reduce Motion setting.
 - **Measure on a physical device.** The simulator numbers below are real but weak, and the
   case for the list optimisation rests on a device measurement I have not taken.
 - **A component test for the chat screen.** The tests cover the logic thoroughly and the
-  screen not at all. Rendering it with `@testing-library/react-native` and asserting the
-  queued, failed and locked states is the obvious next test.
+  screen not at all — which is exactly why the five defects above survived to a manual
+  pass. Rendering it with `@testing-library/react-native` and asserting the queued, failed
+  and locked states is the first thing I would add.
+- **Invert the list.** It is the conventional fix for the scroll-to-bottom problem and
+  would replace the two-stage scroll with something that cannot drift.
 - **Real storage for the outbox.** AsyncStorage rewrites the whole outbox array on every
   status change. That is fine for a queue of a few messages and wrong at a thousand.
   SQLite with a row per message is the real answer.

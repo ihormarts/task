@@ -100,7 +100,7 @@ const styles = StyleSheet.create({
     paddingBottom: spacing.sm,
   },
   bubbleOwn: {
-    marginLeft: spacing.xxl + spacing.xs,
+    marginLeft: 0,
   },
   text: {
     ...typography.body,

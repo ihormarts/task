@@ -94,6 +94,24 @@ describe('paid access', () => {
     harness.paywall.getState().dispose();
   });
 
+  it('reports access as expired once the subscription lapses', async () => {
+    const harness = createHarness();
+    await harness.paywall.getState().initialize();
+    await harness.paywall.getState().purchase(PRODUCT_ID);
+    await harness.entitlements.confirmAllPending();
+
+    expect(isEntitlementActive(harness.paywall.getState().entitlement)).toBe(true);
+
+    await harness.entitlements.expireEntitlement();
+    await harness.paywall.getState().refreshEntitlement();
+
+    expect(harness.paywall.getState().entitlement.status).toBe('expired');
+    expect(isEntitlementActive(harness.paywall.getState().entitlement)).toBe(false);
+    expect(await harness.entitlements.hasActiveAccess()).toBe(false);
+
+    harness.paywall.getState().dispose();
+  });
+
   it('unlocks sending once access is confirmed', async () => {
     const harness = createHarness();
     await harness.paywall.getState().initialize();

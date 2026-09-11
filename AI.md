@@ -80,6 +80,20 @@ they should have been direct. I cut them substantially and rewrote the sections 
 mattered, particularly the bug explanation and the honesty about what the performance
 harness does not measure.
 
+**Code that type-checked, passed 26 tests, and was still wrong.** The environment I worked
+in could not run an iOS simulator, so for most of this exercise the UI existed only as
+code I had reasoned about. When I finally drove the app by hand, five defects surfaced
+within twenty minutes: the thread did not scroll to a message you had just sent, a rejected
+message offered a retry its own error model said was pointless, an `accessible` wrapper
+made the failed bubble's buttons unreachable by tap and by VoiceOver, your own messages
+were visually indistinguishable from the creator's, and the paywall left Subscribe live
+while confirmation was pending. Every one is a rendering or interaction fact that no amount
+of reading the code would have produced. They are listed in the README with their fixes.
+
+The lesson I would state plainly in the walkthrough: a green suite told me the message
+layer was correct, and it was. It said nothing at all about whether the thing was usable,
+and I let the absence of a simulator stand in for evidence longer than I should have.
+
 ## What I am unsure about
 
 **Whether the performance result supports the change.** It is measured and it is weak.
@@ -94,6 +108,11 @@ same sequence on the same machine. It cannot see UI-thread stalls, and on a real
 that is often where the dropped frames are. It also could not read the Hermes heap in this
 runtime, so that column says `n/a`. FlashList ships its own `JSFPSMonitor` and
 `useBenchmark`; I did not cross-check against them, and I should have.
+
+**The paywall fix is the one change I did not re-verify on device.** Re-testing it needs
+the "Expire access" control, which sits below a fold in the demo panel that my automation
+could not scroll. The state it fixes was observed before the fix, the code path is the
+same, and there is a test for expiry — but I have not watched the corrected button myself.
 
 **Android is untested.** Nothing in the project needs native code, so I expect it to run,
 but I have not run it. `KeyboardAvoidingView` is the part I would expect to need work.
