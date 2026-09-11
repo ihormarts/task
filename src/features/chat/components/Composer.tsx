@@ -1,9 +1,9 @@
-import { memo, useCallback, useState } from 'react';
+import { memo, useCallback } from 'react';
 import { Pressable, StyleSheet, Text, TextInput, View } from 'react-native';
+import { useStore } from 'zustand';
 
+import { MAX_MESSAGE_LENGTH, composerStore } from '../composerStore';
 import { MIN_TOUCH_TARGET, palette, radius, spacing, typography } from '../../../design/theme';
-
-const MAX_LENGTH = 400;
 
 type Props = {
   hasAccess: boolean;
@@ -13,7 +13,8 @@ type Props = {
 };
 
 function ComposerComponent({ hasAccess, offline, onSend, onOpenPaywall }: Props) {
-  const [draft, setDraft] = useState('');
+  const draft = useStore(composerStore, (state) => state.draft);
+  const setDraft = useStore(composerStore, (state) => state.setDraft);
 
   const canSend = draft.trim().length > 0;
 
@@ -22,7 +23,7 @@ function ComposerComponent({ hasAccess, offline, onSend, onOpenPaywall }: Props)
       return;
     }
     onSend(draft);
-    setDraft('');
+    composerStore.getState().clear();
   }, [canSend, draft, onSend]);
 
   if (!hasAccess) {
@@ -50,7 +51,7 @@ function ComposerComponent({ hasAccess, offline, onSend, onOpenPaywall }: Props)
           onChangeText={setDraft}
           placeholder="Write a message"
           placeholderTextColor={palette.inkSubtle}
-          maxLength={MAX_LENGTH}
+          maxLength={MAX_MESSAGE_LENGTH}
           multiline
           accessibilityLabel="Message text"
           returnKeyType="send"
@@ -72,7 +73,7 @@ function ComposerComponent({ hasAccess, offline, onSend, onOpenPaywall }: Props)
 
       <View style={styles.metaRow}>
         <Text style={styles.meta}>
-          {draft.length}/{MAX_LENGTH}
+          {draft.length}/{MAX_MESSAGE_LENGTH}
         </Text>
         <Text style={styles.meta}>{offline ? 'Queued while offline' : 'Available messages: Unlimited'}</Text>
       </View>
