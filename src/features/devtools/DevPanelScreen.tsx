@@ -23,6 +23,13 @@ type Props = {
   onClose: () => void;
 };
 
+const CONFIRMATION_DELAYS: { label: string; value: number | null }[] = [
+  { label: 'instant', value: 0 },
+  { label: '4s', value: 4000 },
+  { label: '20s', value: 20000 },
+  { label: 'manual', value: null },
+];
+
 const INCOMING_BATCH = [
   'Missed you on the stream tonight',
   'Dropping the behind the scenes tomorrow',
@@ -36,7 +43,9 @@ export function DevPanelScreen({ onClose }: Props) {
   const [online, setOnline] = useState(conditions.isOnline);
   const [dropResponses, setDropResponses] = useState(conditions.current.dropResponses);
   const [behaviour, setBehaviour] = useState<BillingBehaviour>(billing.behaviour);
-  const [confirmationDelay, setConfirmationDelay] = useState(entitlements.confirmationDelayMs);
+  const [confirmationDelay, setConfirmationDelay] = useState<number | null>(
+    entitlements.confirmationDelayMs,
+  );
 
   const connection = useStore(chatStore, (state) => state.connection);
   const pendingCount = useStore(chatStore, (state) => state.pending.length);
@@ -61,7 +70,7 @@ export function DevPanelScreen({ onClose }: Props) {
     billing.behaviour = next;
   }, []);
 
-  const applyConfirmationDelay = useCallback((next: number) => {
+  const applyConfirmationDelay = useCallback((next: number | null) => {
     setConfirmationDelay(next);
     entitlements.confirmationDelayMs = next;
   }, []);
@@ -161,14 +170,14 @@ export function DevPanelScreen({ onClose }: Props) {
           </View>
 
           <View style={styles.segmented}>
-            {[0, 4000, 20000].map((option) => (
+            {CONFIRMATION_DELAYS.map(({ label, value: option }) => (
               <Pressable
-                key={option}
+                key={label}
                 style={[styles.segment, confirmationDelay === option && styles.segmentActive]}
                 onPress={() => applyConfirmationDelay(option)}
                 accessibilityRole="radio"
                 accessibilityState={{ selected: confirmationDelay === option }}
-                accessibilityLabel={`Backend confirmation delay ${option} milliseconds`}
+                accessibilityLabel={`Backend confirms access ${label}`}
               >
                 <Text
                   style={[
@@ -176,7 +185,7 @@ export function DevPanelScreen({ onClose }: Props) {
                     confirmationDelay === option && styles.segmentTextActive,
                   ]}
                 >
-                  {option === 0 ? 'instant' : `${option / 1000}s`}
+                  {label}
                 </Text>
               </Pressable>
             ))}

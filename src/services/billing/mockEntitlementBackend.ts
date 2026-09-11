@@ -19,7 +19,7 @@ export type SubmitResult = {
 
 export type MockEntitlementBackendOptions = {
   store: KeyValueStore;
-  confirmationDelayMs?: number;
+  confirmationDelayMs?: number | null;
 };
 
 export class MockEntitlementBackend {
@@ -31,13 +31,16 @@ export class MockEntitlementBackend {
 
   private loaded = false;
 
-  confirmationDelayMs: number;
+  private confirmationTimers = new Map<string, ReturnType<typeof setTimeout>>();
+
+  confirmationDelayMs: number | null;
 
   readonly changes = new Emitter<Entitlement>();
 
   constructor(options: MockEntitlementBackendOptions) {
     this.store = options.store;
-    this.confirmationDelayMs = options.confirmationDelayMs ?? 4000;
+    this.confirmationDelayMs =
+      options.confirmationDelayMs === undefined ? 4000 : options.confirmationDelayMs;
   }
 
   async load(): Promise<void> {
@@ -91,7 +94,22 @@ export class MockEntitlementBackend {
       });
     }
 
+    this.scheduleConfirmation(receipt.transactionId);
+
     return { entitlement: this.entitlement, alreadyKnown: false };
+  }
+
+  private scheduleConfirmation(transactionId: string): void {
+    if (this.confirmationDelayMs === null || this.confirmationTimers.has(transactionId)) {
+      return;
+    }
+
+    const timer = setTimeout(() => {
+      this.confirmationTimers.delete(transactionId);
+      void this.confirmPending(transactionId);
+    }, this.confirmationDelayMs);
+
+    this.confirmationTimers.set(transactionId, timer);
   }
 
   async confirmPending(transactionId: string): Promise<Entitlement> {
@@ -103,6 +121,12 @@ export class MockEntitlementBackend {
     }
 
     this.pending.delete(transactionId);
+    const timer = this.confirmationTimers.get(transactionId);
+    if (timer !== undefined) {
+      clearTimeout(timer);
+      this.confirmationTimers.delete(transactionId);
+    }
+
     const now = Date.now();
     await this.setEntitlement({
       status: 'active',
@@ -133,6 +157,8 @@ export class MockEntitlementBackend {
   }
 
   async reset(): Promise<void> {
+    this.confirmationTimers.forEach((timer) => clearTimeout(timer));
+    this.confirmationTimers.clear();
     this.pending.clear();
     this.loaded = true;
     await this.setEntitlement(NO_ENTITLEMENT);

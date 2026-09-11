@@ -45,7 +45,7 @@ export function createHarness(options: HarnessOptions = {}): Harness {
 
   const entitlements = new MockEntitlementBackend({
     store: serverBytes,
-    confirmationDelayMs: 0,
+    confirmationDelayMs: null,
   });
 
   const billing = new MockBillingService({ store: billingBytes, latencyMs: 0 });
