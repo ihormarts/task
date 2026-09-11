@@ -1,0 +1,20 @@
+{
+  "expo": {
+    "name": "FanSuite Chat",
+    "slug": "fansuite-chat",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "scheme": "fansuite",
+    "userInterfaceStyle": "light",
+    "newArchEnabled": true,
+    "ios": {
+      "supportsTablet": false,
+      "bundleIdentifier": "com.fansuite.chattask"
+    },
+    "android": {
+      "package": "com.fansuite.chattask",
+      "edgeToEdgeEnabled": true
+    },
+    "plugins": ["expo-status-bar"]
+  }
+}
