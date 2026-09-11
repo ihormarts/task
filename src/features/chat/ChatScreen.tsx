@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useMemo, useRef } from 'react';
 import { KeyboardAvoidingView, Platform, StyleSheet, View } from 'react-native';
 import { FlashList } from '@shopify/flash-list';
+import type { FlashListRef } from '@shopify/flash-list';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useStore } from 'zustand';
 
@@ -21,6 +22,11 @@ import type { ThreadItem } from '../../domain/message';
 const CREATOR_NAME = 'Ethan Shoots';
 const CREATOR_HANDLE = '@ethan_shoots';
 
+const MAINTAIN_POSITION = {
+  startRenderingFromBottom: true,
+  autoscrollToBottomThreshold: 0.2,
+} as const;
+
 type Props = {
   onOpenPaywall: () => void;
   onOpenDevPanel: () => void;
@@ -28,7 +34,7 @@ type Props = {
 
 export function ChatScreen({ onOpenPaywall, onOpenDevPanel }: Props) {
   const insets = useSafeAreaInsets();
-  const listRef = useRef<FlashList<ThreadItem>>(null);
+  const listRef = useRef<FlashListRef<ThreadItem>>(null);
 
   const thread = useStore(chatStore, (state) => state.thread);
   const connection = useStore(chatStore, (state) => state.connection);
@@ -126,7 +132,7 @@ export function ChatScreen({ onOpenPaywall, onOpenDevPanel }: Props) {
             keyboardDismissMode="interactive"
             keyboardShouldPersistTaps="handled"
             contentContainerStyle={styles.listContent}
-            maintainVisibleContentPosition={{ minIndexForVisible: 1 }}
+            maintainVisibleContentPosition={MAINTAIN_POSITION}
           />
         )}
 
@@ -144,7 +150,7 @@ export function ChatScreen({ onOpenPaywall, onOpenDevPanel }: Props) {
 }
 
 type UnoptimisedProps = {
-  listRef: React.RefObject<FlashList<ThreadItem> | null>;
+  listRef: React.RefObject<FlashListRef<ThreadItem> | null>;
   thread: ThreadItem[];
   connection: ReturnType<typeof chatStore.getState>['connection'];
   onRetry: (clientId: string) => void;
